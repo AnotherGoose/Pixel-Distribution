@@ -30,10 +30,10 @@ def getNewDimensions(nPixels, oWidth, oHeight):
         nHeight = round(nHeight)
 
     #nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
-    uStepW = round(oWidth / nWidth)
-   #uStepH = round(oHeight / nHeight)
+    #uStepW = round(oWidth / nWidth)
+    #uStepH = round(oHeight / nHeight)
 
-    return (oHeight, nHeight, uStepW, uStepH)
+    return (nWidth, nHeight)
 
 def nearestInterpolation():
     x = 0
@@ -43,7 +43,7 @@ def nearestInterpolation():
 ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
 
 #Set Total Pixels
-pix = 2500
+pix = 100
 roiPor = 80
 backPor = 100 - roiPor
 
@@ -59,9 +59,9 @@ uniform = np.ones((imH, imW), np.uint8)
 #========UNIFORM SAMPLING=========
 uHei, uWid  = uniform.shape
 uAspRot = uWid/uHei
-nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
-#uStepW = round(uWid/nW)
-#uStepH = round(uHei/nH)
+nW, nH = getNewDimensions(pix, uWid, uHei)
+uStepW = round(uWid/nW)
+uStepH = round(uHei/nH)
 
 c = 0
 for i in range(0, uHei):
@@ -96,7 +96,7 @@ for i in ROI:
 
 
 #Calculate individual ROI pixels
-newAspect = np.zeros((ROI.shape[0],4), np.uint8)
+newAspect = np.zeros((ROI.shape[0],2), np.uint8)
 pixies = np.zeros((ROI.shape[0],1), np.uint8)
 
 for i in range(0, ROI.shape[0]):
@@ -107,7 +107,7 @@ for i in range(0, ROI.shape[0]):
     nPixels = round(roiTotPix * roiRot)
     newAspect[i] = getNewDimensions(nPixels, w, h)
     #CHANGE ACCORDINGLY
-    (newW, newH, s, p) = newAspect[i]
+    (newW, newH) = newAspect[i]
 
     print("===========================")
     print("Aspect Ratio", (w/h))
@@ -123,7 +123,7 @@ counter = 0
 
 for i in range(0, ROI.shape[0]):
     x, y, w, h = ROI[i]
-    aW, aH, stepW, stepH = newAspect[i]
+    aW, aH = newAspect[i]
 
     #====================REMOVE===========================
     #ONLY USED TO SHOW THE REGION OF INTEREST
@@ -133,8 +133,8 @@ for i in range(0, ROI.shape[0]):
     #=====================================================
 
     #Calculate the step value for the pixels
-    #stepW = round(w / aW)
-    #stepH = round(h / aH)
+    stepW = round(w / aW)
+    stepH = round(h / aH)
 
     #STOP WHEN TOTAL PIXELS ARE REACHED
     #Loop by each step which has been defined
