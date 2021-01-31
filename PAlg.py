@@ -31,7 +31,7 @@ def getNewDimensions(nPixels, oWidth, oHeight):
 
     #nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
     uStepW = round(oWidth / nWidth)
-    uStepH = round(oHeight / nHeight)
+   #uStepH = round(oHeight / nHeight)
 
     return (oHeight, nHeight, uStepW, uStepH)
 
