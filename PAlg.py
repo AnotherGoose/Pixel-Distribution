@@ -19,9 +19,11 @@ def getNewDimensions(nPixels, oWidth, oHeight):
         if nPixels > (round(nWidth) * math.floor(nHeight)):
             nWidth = round(nWidth)
             nHeight = math.floor(nHeight)
+
         elif nPixels > (math.floor(nWidth) * round(nHeight)):
             nWidth = math.floor(nWidth)
             nHeight = round(nHeight)
+
         elif nPixels > (math.floor(nWidth) * math.floor(nHeight)):
             nWidth = math.floor(nWidth)
             nHeight = math.floor(nHeight)
@@ -29,11 +31,12 @@ def getNewDimensions(nPixels, oWidth, oHeight):
         nWidth = round(nWidth)
         nHeight = round(nHeight)
 
-    #nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
-    #uStepW = round(oWidth / nWidth)
-    #uStepH = round(oHeight / nHeight)
 
-    return (nWidth, nHeight)
+    #nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
+    uStepW = math.ceil(oWidth / nWidth)
+    uStepH = math.ceil(oHeight / nHeight)
+
+    return (nWidth, nHeight, uStepW, uStepH)
 
 def nearestInterpolation():
     x = 0
@@ -59,9 +62,9 @@ uniform = np.ones((imH, imW), np.uint8)
 #========UNIFORM SAMPLING=========
 uHei, uWid  = uniform.shape
 uAspRot = uWid/uHei
-nW, nH = getNewDimensions(pix, uWid, uHei)
-uStepW = round(uWid/nW)
-uStepH = round(uHei/nH)
+nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
+#uStepW = round(uWid/nW)
+#uStepH = round(uHei/nH)
 
 c = 0
 for i in range(0, uHei):
@@ -96,7 +99,7 @@ for i in ROI:
 
 
 #Calculate individual ROI pixels
-newAspect = np.zeros((ROI.shape[0],2), np.uint8)
+newAspect = np.zeros((ROI.shape[0],4), np.uint8)
 pixies = np.zeros((ROI.shape[0],1), np.uint8)
 
 for i in range(0, ROI.shape[0]):
@@ -106,24 +109,13 @@ for i in range(0, ROI.shape[0]):
     roiRot = oldRes/pixSumROI
     nPixels = round(roiTotPix * roiRot)
     newAspect[i] = getNewDimensions(nPixels, w, h)
-    #CHANGE ACCORDINGLY
-    (newW, newH) = newAspect[i]
-
-    print("===========================")
-    print("Aspect Ratio", (w/h))
-    print("New Pixels: ", nPixels)
-    print("Orig W: ", w)
-    print("Orig H: ", h)
-    print("New W: ", newW)
-    print("New H: ", newH)
-    print("===========================")
 
 #Make half the image white and the other black
 counter = 0
 
 for i in range(0, ROI.shape[0]):
     x, y, w, h = ROI[i]
-    aW, aH = newAspect[i]
+    aW, aH, stepW, stepH = newAspect[i]
 
     #====================REMOVE===========================
     #ONLY USED TO SHOW THE REGION OF INTEREST
@@ -133,8 +125,8 @@ for i in range(0, ROI.shape[0]):
     #=====================================================
 
     #Calculate the step value for the pixels
-    stepW = round(w / aW)
-    stepH = round(h / aH)
+    #stepW = round(w / aW)
+    #stepH = round(h / aH)
 
     #STOP WHEN TOTAL PIXELS ARE REACHED
     #Loop by each step which has been defined
