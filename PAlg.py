@@ -16,12 +16,12 @@ def getNewDimensions(nPixels, oWidth, oHeight):
     tStepH = oHeight/ nHeight
 
     (nWidth, nHeight) = checkRoundingDim(nPixels, nWidth, nHeight)
-    #(tStepW, tStepH) = checkRoundingStep(nPixels, tStepW, tStepH, oWidth, oHeight)
+    (tStepW, tStepH) = checkRoundingStep(nWidth, nHeight, oWidth, oHeight)
 
     #CHECK ROUNDING
     tStepH = math.ceil(tStepH)
     tStepW = math.ceil(tStepW)
-    #nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
+
 
     uStepW = tStepW
     uStepH = tStepH
@@ -48,29 +48,29 @@ def checkRoundingDim(limit, w, h):
         w = round(w)
         h = round(h)
     return(w, h)
-'''
-def checkRoundingStep(limit, stepW, stepH, oWidth, oHeight):
-    #FIX FUNCTION
-    w = oWidth / stepW
-    h = oHeight / stepH
-    if h > nH:
-        stepH
-    if limit < round(w) * round(h):
-        if limit > (round(w) * math.floor(h)):
-            #w = round(w)
-            stepH = math.ceil(stepH)
 
-        elif limit > (math.floor(w) * round(h)):
-            stepW = math.ceil(stepW)
+def checkRoundingStep(nW, nH, oW, oH):
+    #New Pixel limit from new resolution
+    limit = nW * nH
 
-        elif limit > (math.floor(w) * math.floor(h)):
-            stepW = math.ceil(stepW)
-            stepH = math.ceil(stepH)
-    else:
-        stepW = round(stepW)
-        stepH = round(stepH)
+    stepH = oH / nH
+    stepW = oW / nW
+
+    roundSH = round(stepH)
+    roundSW = round(stepW)
+    tempH = oH / roundSH
+    tempW = oW / roundSW
+    if limit < tempH * tempW:
+        roundSH = math.ceil(stepH)
+        tempH = oH / roundSH
+        if limit > tempH * tempW:
+            roundSW = math.ceil(stepW)
+            tempW = oW / roundSW
+
+    stepH = roundSH
+    stepW = roundSW
     return(stepW, stepH)
-'''
+
 
 def nearestInterpolation():
     x = 0
@@ -80,7 +80,7 @@ def nearestInterpolation():
 ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
 
 #Set Total Pixels
-pix = 1716
+pix = 25000
 roiPor = 80
 backPor = 100 - roiPor
 
@@ -134,8 +134,8 @@ for i in ROI:
 #Calculate individual ROI pixels
 newAspect = np.zeros((ROI.shape[0],4), np.uint8)
 pixies = np.zeros((ROI.shape[0],1), np.uint8)
-
 remPixels = 0
+
 for i in range(0, ROI.shape[0]):
     x, y, w, h = ROI[i]
     oldRes = (w * h)
@@ -160,8 +160,8 @@ for i in range(0, ROI.shape[0]):
 
     #====================REMOVE===========================
     #ONLY USED TO SHOW THE REGION OF INTEREST
-    for j in range(y, y + h):
-        for k in range(x, x + w):
+    for j in range(y, y + h + 1):
+        for k in range(x, x + w + 1):
             img[j][k] = 20
     #=====================================================
 
@@ -183,7 +183,7 @@ for i in range(0, ROI.shape[0]):
                     counter += 1
 
 print("Adaptive pixels used: ", counter)
-
+print("AS ROI Portion: ", (counter / pix)*100, "%")
 #Show the Image
 cv2.imshow("Adaptive Sampling",img)
 cv2.imshow("Uniform",uniform)
