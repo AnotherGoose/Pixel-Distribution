@@ -16,17 +16,13 @@ def getNewDimensions(nPixels, oWidth, oHeight):
     tStepH = oHeight/ nHeight
 
     (nWidth, nHeight) = checkRoundingDim(nPixels, nWidth, nHeight)
-    (tStepW, tStepH) = checkRoundingStep(nWidth, nHeight, oWidth, oHeight)
-
-    #CHECK ROUNDING
-    tStepH = math.ceil(tStepH)
-    tStepW = math.ceil(tStepW)
+    (uStepW, uStepH) = checkRoundingStep(nWidth, nHeight, oWidth, oHeight)
 
 
-    uStepW = tStepW
-    uStepH = tStepH
+    #Output remaining pixels
+    remPix = nPixels - (nWidth * nHeight)
 
-    return (nWidth, nHeight, uStepW, uStepH)
+    return (nWidth, nHeight, uStepW, uStepH, remPix)
 
 
 def checkRoundingDim(limit, w, h):
@@ -65,7 +61,7 @@ def checkRoundingStep(nW, nH, oW, oH):
         tempH = oH / roundSH
         if limit > tempH * tempW:
             roundSW = math.ceil(stepW)
-            tempW = oW / roundSW
+            #tempW = oW / roundSW
 
     stepH = roundSH
     stepW = roundSW
@@ -80,7 +76,7 @@ def nearestInterpolation():
 ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
 
 #Set Total Pixels
-pix = 25000
+pix = 2000
 roiPor = 80
 backPor = 100 - roiPor
 
@@ -96,7 +92,7 @@ uniform = np.ones((imH, imW), np.uint8)
 #========UNIFORM SAMPLING=========
 uHei, uWid  = uniform.shape
 uAspRot = uWid/uHei
-nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
+nW, nH, uStepW, uStepH, remPix = getNewDimensions(pix, uWid, uHei)
 
 c = 0
 for i in range(0, uHei):
@@ -132,45 +128,49 @@ for i in ROI:
 
 
 #Calculate individual ROI pixels
-newAspect = np.zeros((ROI.shape[0],4), np.uint8)
+newAspect = np.zeros((ROI.shape[0],5), np.uint8)
 pixies = np.zeros((ROI.shape[0],1), np.uint8)
 remPixels = 0
+counter = 0
 
+#====================REMOVE===========================
+#ONLY USED TO SHOW THE REGION OF INTEREST
+for i in range(0, ROI.shape[0]):
+    x, y, w, h = ROI[i]
+    for j in range(y, y + h + 1):
+        for k in range(x, x + w + 1):
+            img[j][k] = 20
+#=====================================================
+
+#================Background Pixels=====================
+bW, bH, bStepW, bStepH, remPix = getNewDimensions(backPix, imW, imH)
+
+for i in range(bH):
+    uY = (i * bStepH)
+    if uY < imH:
+        for j in range(bW):
+            uX = (j * bStepW)
+            if uX < imW:
+                if c < pix:
+                    img[uY][uX] = 255
+                    counter += 1
+#=======================================================
+
+#Figure out new pixels
 for i in range(0, ROI.shape[0]):
     x, y, w, h = ROI[i]
     oldRes = (w * h)
 
     roiRot = oldRes/pixSumROI
     nPixels = (roiTotPix * roiRot)
-    newAspect[i] = getNewDimensions(nPixels + remPixels, w, h)
-    (nW, nH, nSW, nSH) = newAspect[i]
-    #If there are pixels remaining pass it on to the next ROI
-    #UNSURE IF THIS WORKS FOR CONTINUING ROI MIGHT ONLY WORK FOR PASSING IT ONTO THE NEXT ROI
-    #FIGURE OUT HOW LOG LEFT OVER PIXELS FOR THE ENTIRE ROIs
-    #WHY IS THIS FUCKED
-    #nP = nW * nH
-    #remPixels = nPixels - nP
+    newAspect[i] = getNewDimensions(nPixels + remPix, w, h)
+    (nW, nH, nSW, nSH, remPix) = newAspect[i]
 
-#Make half the image white and the other black
-counter = 0
 
 for i in range(0, ROI.shape[0]):
     x, y, w, h = ROI[i]
-    aW, aH, stepW, stepH = newAspect[i]
+    aW, aH, stepW, stepH, remPix = newAspect[i]
 
-    #====================REMOVE===========================
-    #ONLY USED TO SHOW THE REGION OF INTEREST
-    for j in range(y, y + h + 1):
-        for k in range(x, x + w + 1):
-            img[j][k] = 20
-    #=====================================================
-
-    #Calculate the step value for the pixels
-
-    #STOP WHEN TOTAL PIXELS ARE REACHED
-    #Loop by each step which has been defined
-
-    count = 0
     for j in range(aH):
         yN = y + (j * stepH)
         #SHOULDNT HAPPEN
