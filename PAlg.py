@@ -5,38 +5,72 @@ import math
 def getNewDimensions(nPixels, oWidth, oHeight):
     #Calculate Aspect Ratio
     aspectRatio = oWidth/oHeight
+
     #Calculate new width and height
     nWidth = math.sqrt(nPixels * aspectRatio)
     nHeight = nPixels/ nWidth
 
     #MAKE A CHECK FOR IF THE PIXELS ARE OVER
-    if nPixels < round(nWidth) * round(nHeight):
-        print("======================")
-        print("ERROR IN NEW DIMENSIONS \nPixels: ", nWidth * nHeight)
-        print("======================")
 
-        #CLEAN UP THIS IS MESSY AS
-        if nPixels > (round(nWidth) * math.floor(nHeight)):
-            nWidth = round(nWidth)
-            nHeight = math.floor(nHeight)
+    tStepW = oWidth/ nWidth
+    tStepH = oHeight/ nHeight
 
-        elif nPixels > (math.floor(nWidth) * round(nHeight)):
-            nWidth = math.floor(nWidth)
-            nHeight = round(nHeight)
+    (nWidth, nHeight) = checkRoundingDim(nPixels, nWidth, nHeight)
+    #(tStepW, tStepH) = checkRoundingStep(nPixels, tStepW, tStepH, oWidth, oHeight)
 
-        elif nPixels > (math.floor(nWidth) * math.floor(nHeight)):
-            nWidth = math.floor(nWidth)
-            nHeight = math.floor(nHeight)
-    else:
-        nWidth = round(nWidth)
-        nHeight = round(nHeight)
-
-
+    #CHECK ROUNDING
+    tStepH = math.ceil(tStepH)
+    tStepW = math.ceil(tStepW)
     #nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
-    uStepW = math.ceil(oWidth / nWidth)
-    uStepH = math.ceil(oHeight / nHeight)
+
+    uStepW = tStepW
+    uStepH = tStepH
 
     return (nWidth, nHeight, uStepW, uStepH)
+
+
+def checkRoundingDim(limit, w, h):
+    #Check if the rounding for the width and height surpasses the pixel limit
+    if limit < round(w) * round(h):
+        #CLEAN UP THIS IS MESSY AS
+        if limit > (round(w) * math.floor(h)):
+            w = round(w)
+            h = math.floor(h)
+
+        elif limit > (math.floor(w) * round(h)):
+            w = math.floor(w)
+            h = round(h)
+
+        elif limit > (math.floor(w) * math.floor(h)):
+            w = math.floor(w)
+            h = math.floor(h)
+    else:
+        w = round(w)
+        h = round(h)
+    return(w, h)
+'''
+def checkRoundingStep(limit, stepW, stepH, oWidth, oHeight):
+    #FIX FUNCTION
+    w = oWidth / stepW
+    h = oHeight / stepH
+    if h > nH:
+        stepH
+    if limit < round(w) * round(h):
+        if limit > (round(w) * math.floor(h)):
+            #w = round(w)
+            stepH = math.ceil(stepH)
+
+        elif limit > (math.floor(w) * round(h)):
+            stepW = math.ceil(stepW)
+
+        elif limit > (math.floor(w) * math.floor(h)):
+            stepW = math.ceil(stepW)
+            stepH = math.ceil(stepH)
+    else:
+        stepW = round(stepW)
+        stepH = round(stepH)
+    return(stepW, stepH)
+'''
 
 def nearestInterpolation():
     x = 0
@@ -46,7 +80,7 @@ def nearestInterpolation():
 ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
 
 #Set Total Pixels
-pix = 100
+pix = 1716
 roiPor = 80
 backPor = 100 - roiPor
 
@@ -63,8 +97,6 @@ uniform = np.ones((imH, imW), np.uint8)
 uHei, uWid  = uniform.shape
 uAspRot = uWid/uHei
 nW, nH, uStepW, uStepH = getNewDimensions(pix, uWid, uHei)
-#uStepW = round(uWid/nW)
-#uStepH = round(uHei/nH)
 
 c = 0
 for i in range(0, uHei):
@@ -77,7 +109,8 @@ for i in range(0, uHei):
                 if c < pix:
                     uniform[uY][uX] = 255
                     c += 1
-print("Pixels used: ", c)
+print("Total Pixels: ", pix)
+print("Uniform pixels used: ", c)
 #=================================
 
 
@@ -85,10 +118,10 @@ print("Pixels used: ", c)
 #SET ROI LIMIT?
 
 #Round up ROI pixels
-roiTotPix = round(pix * (roiPor / 100))
+roiTotPix = (pix * (roiPor / 100))
 
 #Round Down background pixels
-backPix = round(pix * (backPor/100))
+backPix = (pix * (backPor/100))
 
 #Calculate total number of original ROI pixels
 
@@ -102,13 +135,21 @@ for i in ROI:
 newAspect = np.zeros((ROI.shape[0],4), np.uint8)
 pixies = np.zeros((ROI.shape[0],1), np.uint8)
 
+remPixels = 0
 for i in range(0, ROI.shape[0]):
     x, y, w, h = ROI[i]
     oldRes = (w * h)
 
     roiRot = oldRes/pixSumROI
-    nPixels = round(roiTotPix * roiRot)
-    newAspect[i] = getNewDimensions(nPixels, w, h)
+    nPixels = (roiTotPix * roiRot)
+    newAspect[i] = getNewDimensions(nPixels + remPixels, w, h)
+    (nW, nH, nSW, nSH) = newAspect[i]
+    #If there are pixels remaining pass it on to the next ROI
+    #UNSURE IF THIS WORKS FOR CONTINUING ROI MIGHT ONLY WORK FOR PASSING IT ONTO THE NEXT ROI
+    #FIGURE OUT HOW LOG LEFT OVER PIXELS FOR THE ENTIRE ROIs
+    #WHY IS THIS FUCKED
+    #nP = nW * nH
+    #remPixels = nPixels - nP
 
 #Make half the image white and the other black
 counter = 0
@@ -125,8 +166,6 @@ for i in range(0, ROI.shape[0]):
     #=====================================================
 
     #Calculate the step value for the pixels
-    #stepW = round(w / aW)
-    #stepH = round(h / aH)
 
     #STOP WHEN TOTAL PIXELS ARE REACHED
     #Loop by each step which has been defined
@@ -143,7 +182,7 @@ for i in range(0, ROI.shape[0]):
                     img[yN][xN] = 255
                     counter += 1
 
-print("Total number of iterations for this loop is: ", counter)
+print("Adaptive pixels used: ", counter)
 
 #Show the Image
 cv2.imshow("Adaptive Sampling",img)
