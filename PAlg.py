@@ -107,6 +107,7 @@ for i in range(0, uHei):
                     c += 1
 print("Total Pixels: ", pix)
 print("Uniform pixels used: ", c)
+print("Uniform Portion: ", (c / pix)*100, "%")
 #=================================
 
 
@@ -151,7 +152,7 @@ for i in range(bH):
         for j in range(bW):
             uX = (j * bStepW)
             if uX < imW:
-                if c < pix:
+                if counter < backPix:
                     img[uY][uX] = 255
                     counter += 1
 #=======================================================
@@ -184,6 +185,7 @@ for i in range(0, ROI.shape[0]):
 
 print("Adaptive pixels used: ", counter)
 print("AS ROI Portion: ", (counter / pix)*100, "%")
+
 #Show the Image
 cv2.imshow("Adaptive Sampling",img)
 cv2.imshow("Uniform",uniform)
