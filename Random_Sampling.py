@@ -40,11 +40,19 @@ RS = np.zeros((imH, imW), np.uint8)
 #========Linear Random Sample Background=========
 rows, cols = RS.shape
 for i in range(0, pix):
-    rX = random.randint(0, cols-1)
-    rY = random.randint(0, rows-1)
+    unused = False
+    while(unused == False):
+        rX = random.randint(0, cols - 1)
+        rY = random.randint(0, rows - 1)
 
-    RS[rY][rX] = depth[rY][rX]
-    #RS[rY][rX] = 255
+        if RS[rY][rX] == 0:
+            RS[rY][rX] = depth[rY][rX]
+            # RS[rY][rX] = 255
+            unused = True
+        else:
+            unused = False
+
+
 #================================================
 
 
@@ -62,10 +70,17 @@ backPix = math.floor(pix * (backPor/100))
 
 
 for i in range(0, backPix):
-    rX = random.randint(0, cols-1)
-    rY = random.randint(0, rows-1)
+    unused = False
+    while (unused == False):
+        rX = random.randint(0, cols - 1)
+        rY = random.randint(0, rows - 1)
 
-    AS[rY][rX] = depth[rY][rX]
+        if AS[rY][rX] == 0:
+            AS[rY][rX] = depth[rY][rX]
+            #AS[rY][rX] = 255
+            unused = True
+        else:
+            unused = False
     #img[rY][rX] = 255
 
 #========ROI's Random Sampling=========
@@ -85,10 +100,17 @@ for i in ROI:
     ROIPort = (w * h)/(pixSumROI)
     nPixels = round(roiTotPix * ROIPort)
     for j in range(0, nPixels):
-        rX = random.randint(x, x + w - 1)
-        rY = random.randint(y, y + h - 1)
+        unused = False
+        while (unused == False):
+            rX = random.randint(x, x + w - 1)
+            rY = random.randint(y, y + h - 1)
 
-        AS[rY][rX] = depth[rY][rX]
+            if AS[rY][rX] == 0:
+                AS[rY][rX] = depth[rY][rX]
+                # AS[rY][rX] = 255
+                unused = True
+            else:
+                unused = False
         #img[rY][rX] = 255
 #=====================================================
 
