@@ -14,7 +14,7 @@ pix = 10000
 
 #Define constants for feature map
 backConst = 1
-roiConst = 10
+roiConst = 100
 
 depth = cv2.imread("Depth.png")
 depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
@@ -52,17 +52,16 @@ nX = rX
 nY = rY
 n = depth[rY][rX]
 AS[rY][rX] = n
-pCount +=1
+pCount += 1
 
 
 #=========Preform Met Hastings=============
-#for t in range(0, pix - 1):
 while pCount < pix:
     #Random x and y Values
     rX = random.randint(0, imW - 1)
     rY = random.randint(0, imH - 1)
     #Ratio of new point compared to previous on feature map
-    α = (fMap[rY][rX])/(fMap[nY][nX])
+    α = min((fMap[rY][rX])/(fMap[nY][nX]), 1)
     #Random int between 1 and 0
     r = random.uniform(0, 1)
     if r < α:
@@ -76,6 +75,9 @@ while pCount < pix:
 
 print(pCount)
 
+#=========PREFORM INTERPOLATION BEFORE RMSE==================
+
+#============================================================
 
 #RMSE of total image
 rmseN = rmse(depth, depth)
