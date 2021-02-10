@@ -11,12 +11,35 @@ def rmse(predictions, targets):
     RMSE = math.sqrt(MSE)
     return RMSE
 
+def nInterp2D(pixels, array):
+    # Given a specific number of non-NaN pixels
+    # interpolate to the grid of the 2D array
+    c = 0
+    h, w = array.shape
 
-pix = 1000
+    # Grid to interpolate over
+    grid_y, grid_x = np.mgrid[0:h, 0:w]
+
+    # Values for non NaN points in the array
+    values = np.empty(pixels)
+    # X and Y coordinates of values
+    points = np.empty((pixels, 2))
+
+    for i in range(h):
+        for j in range(w):
+            if not math.isnan(array[i][j]):
+                values[c] = array[i][j]
+                points[c] = (i, j)
+                c += 1
+    Nearest = griddata(points, values, (grid_y, grid_x), method='nearest')
+    return Nearest
+
+
+pix = 100000
 
 #Define constants for feature map
 backConst = 1
-roiConst = 100
+roiConst = 250
 
 depth = cv2.imread("Depth.png")
 depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
@@ -84,36 +107,8 @@ print(pCount)
 
 
 #=========PREFORM INTERPOLATION BEFORE RMSE==================
-#Grid to interpolate over
-grid_y, grid_x = np.mgrid[0:imH, 0:imW]
 
-#Values for non NaN points in the AS array
-values = np.empty(pix)
-#X and Y coordinates of values
-points = np.empty((pix, 2))
-
-#Counter to assure values and coordinates are linked
-c = 0
-for i in range(imH):
-    for j in range(imW):
-        if not math.isnan(AS[i][j]):
-            values[c] = AS[i][j]
-            points[c] = (i, j)
-            c += 1
-
-
-gridNearest = griddata(points, values, (grid_y, grid_x), method='nearest')
-
-plt.subplot(121)
-plt.imshow(gridNearest.T)
-plt.xticks([])
-plt.yticks([])
-plt.subplot(122)
-plt.imshow(depth.T)
-plt.xticks([])
-plt.yticks([])
-plt.show()
-
+gridNearest = nInterp2D(pix, AS)
 #============================================================
 
 #RMSE of total image
@@ -136,7 +131,26 @@ for i in ROI:
     print("ROI AS RMSE: ", rmseAS)
 #=========================================
 
-#cv2.imshow("Met Hastings AS", AS)
+plt.subplot(221)
+plt.imshow(gridNearest.T)
+plt.xticks([])
+plt.yticks([])
+plt.subplot(222)
+plt.imshow(depth.T)
+plt.xticks([])
+plt.yticks([])
+
+plt.subplot(223)
+plt.imshow(cropAS.T)
+plt.xticks([])
+plt.yticks([])
+plt.subplot(224)
+plt.imshow(cropDepth.T)
+plt.xticks([])
+plt.yticks([])
+plt.show()
+
+cv2.imshow("Met Hastings AS", gridNearest)
 
 # Keep Image Open
 cv2.waitKey(0)
