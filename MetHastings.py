@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import math
 import random
+from scipy.interpolate import griddata
+import matplotlib.pyplot as plt
 
 def rmse(predictions, targets):
     #return np.sqrt(((predictions - targets) **
@@ -10,7 +12,7 @@ def rmse(predictions, targets):
     return RMSE
 
 
-pix = 10000
+pix = 1000
 
 #Define constants for feature map
 backConst = 1
@@ -25,7 +27,12 @@ ROI = np.array([[418, 67, 211, 310]])
 imH, imW = depth.shape
 
 fMap = np.zeros((imH, imW))
-AS = np.zeros((imH, imW), np.uint8)
+AS = np.empty((imH, imW))
+AS[:] = np.nan
+
+if pix > imH*imW:
+    print("Error: Pixel allocation is too large")
+    pix = imH*imW
 
 #=====Make Feature Map=======
 
@@ -66,7 +73,7 @@ while pCount < pix:
     r = random.uniform(0, 1)
     if r < α:
         #Check if pixel is used
-        if AS[rY][rX] == 0:
+        if math.isnan(AS[rY][rX]):
             nX = rX
             nY = rY
             n = depth[rY][rX]
@@ -75,13 +82,43 @@ while pCount < pix:
 
 print(pCount)
 
+
 #=========PREFORM INTERPOLATION BEFORE RMSE==================
+#Grid to interpolate over
+grid_y, grid_x = np.mgrid[0:imH, 0:imW]
+
+#Values for non NaN points in the AS array
+values = np.empty(pix)
+#X and Y coordinates of values
+points = np.empty((pix, 2))
+
+#Counter to assure values and coordinates are linked
+c = 0
+for i in range(imH):
+    for j in range(imW):
+        if not math.isnan(AS[i][j]):
+            values[c] = AS[i][j]
+            points[c] = (i, j)
+            c += 1
+
+
+gridNearest = griddata(points, values, (grid_y, grid_x), method='nearest')
+
+plt.subplot(121)
+plt.imshow(gridNearest.T)
+plt.xticks([])
+plt.yticks([])
+plt.subplot(122)
+plt.imshow(depth.T)
+plt.xticks([])
+plt.yticks([])
+plt.show()
 
 #============================================================
 
 #RMSE of total image
 rmseN = rmse(depth, depth)
-rmseAS = rmse(AS, depth)
+rmseAS = rmse(gridNearest, depth)
 
 print("Normal RMSE: ", rmseN)
 print("AS RMSE: ", rmseAS)
@@ -91,7 +128,7 @@ print("RMSE of ROI")
 for i in ROI:
     x,y,w,h = i
 
-    cropAS = AS[y:y+h, x:x+w]
+    cropAS = gridNearest[y:y+h, x:x+w]
     cropDepth = depth[y:y+h, x:x+w]
 
     rmseAS = rmse(cropAS, cropDepth)
@@ -99,7 +136,7 @@ for i in ROI:
     print("ROI AS RMSE: ", rmseAS)
 #=========================================
 
-cv2.imshow("Met Hastings AS", AS)
+#cv2.imshow("Met Hastings AS", AS)
 
 # Keep Image Open
 cv2.waitKey(0)
