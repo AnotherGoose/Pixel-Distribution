@@ -4,11 +4,14 @@ import math
 import random
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error
 
 def rmse(predictions, targets):
     #return np.sqrt(((predictions - targets) **
-    MSE = np.square(np.subtract(targets, predictions)).mean()
-    RMSE = math.sqrt(MSE)
+    #MSE = np.square(np.subtract(targets, predictions)).mean()
+    #RMSE = math.sqrt(MSE)
+    RMSE = mean_squared_error(targets, predictions, squared=False)
+
     return RMSE
 
 def nInterp2D(pixels, array):
@@ -32,84 +35,76 @@ def nInterp2D(pixels, array):
                 points[c] = (i, j)
                 c += 1
     Nearest = griddata(points, values, (grid_y, grid_x), method='nearest')
+    Nearest = Nearest.astype(np.uint8)
     return Nearest
 
+def MetHastings(img, ROI, pixels, bConst, roiConst):
+    imH, imW = img.shape
 
-pix = 100000
+    #Define AS value array and Feature Map
+    fMap = np.zeros((imH, imW))
+    AS = np.empty((imH, imW))
+    AS[:] = np.nan
 
-#Define constants for feature map
-backConst = 1
-roiConst = 250
+    if pixels > imH * imW:
+        print("Error: Pixel allocation is too large")
+        pixels = imH * imW
+
+    #Make Feature Map
+    #Background
+    for i in range(imH):
+        for j in range(imW):
+            fMap[i][j] = img[i][j] * bConst
+
+    #ROI
+    for r in ROI:
+        x, y, w, h = r
+        for i in range(y, y + h + 1):
+            for j in range(x, x + w + 1):
+                fMap[i][j] = (img[i][j]) * roiConst
+
+    #Pixels sampled
+    pCount = 0
+
+    #Set initial Met Hastings position
+    rX = random.randint(0, imW)
+    rY = random.randint(0, imH)
+    nX = rX
+    nY = rY
+    n = img[rY][rX]
+    AS[rY][rX] = n
+    pCount += 1
+
+    #Loop through other pixels
+    while pCount < pix:
+        # Random x and y Values
+        rX = random.randint(0, imW - 1)
+        rY = random.randint(0, imH - 1)
+        # Ratio of new point compared to previous on feature map
+        α = min((fMap[rY][rX]) / (fMap[nY][nX]), 1)
+        # Random int between 1 and 0
+        r = random.uniform(0, 1)
+        if r < α:
+            # Check if pixel is used
+            if math.isnan(AS[rY][rX]):
+                nX = rX
+                nY = rY
+                n = img[rY][rX]
+                AS[rY][rX] = n
+                pCount += 1
+
+    nearestAS = nInterp2D(pix, AS)
+
+    return nearestAS
 
 depth = cv2.imread("Depth.png")
 depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
 
 ROI = np.array([[418, 67, 211, 310]])
 
-#RGB Width and Height
-imH, imW = depth.shape
+pix = 10000
 
-fMap = np.zeros((imH, imW))
-AS = np.empty((imH, imW))
-AS[:] = np.nan
-
-if pix > imH*imW:
-    print("Error: Pixel allocation is too large")
-    pix = imH*imW
-
-#=====Make Feature Map=======
-
-#Define all points by background constant
-for i in range(imH):
-    for j in range(imW):
-        fMap[i][j] = depth[i][j] * backConst
-
-
-#Boost values within ROI
-for r in ROI:
-    x, y, w, h = r
-    for i in range(y, y + h + 1):
-        for j in range(x, x + w + 1):
-            fMap[i][j] = (depth[i][j]) * roiConst
-
-#Pixel Count
-pCount = 0
-
-#Make Initial Position n
-rX = random.randint(0, imW)
-rY = random.randint(0, imH)
-nX = rX
-nY = rY
-n = depth[rY][rX]
-AS[rY][rX] = n
-pCount += 1
-
-
-#=========Preform Met Hastings=============
-while pCount < pix:
-    #Random x and y Values
-    rX = random.randint(0, imW - 1)
-    rY = random.randint(0, imH - 1)
-    #Ratio of new point compared to previous on feature map
-    α = min((fMap[rY][rX])/(fMap[nY][nX]), 1)
-    #Random int between 1 and 0
-    r = random.uniform(0, 1)
-    if r < α:
-        #Check if pixel is used
-        if math.isnan(AS[rY][rX]):
-            nX = rX
-            nY = rY
-            n = depth[rY][rX]
-            AS[rY][rX] = n
-            pCount += 1
-
-print(pCount)
-
-
-#=========PREFORM INTERPOLATION BEFORE RMSE==================
-
-gridNearest = nInterp2D(pix, AS)
-#============================================================
+gridNearest = MetHastings(depth, ROI, pix, 1, 10)
 
 #RMSE of total image
 rmseN = rmse(depth, depth)
@@ -148,10 +143,10 @@ plt.subplot(224)
 plt.imshow(cropDepth.T)
 plt.xticks([])
 plt.yticks([])
-plt.show()
 
 cv2.imshow("Met Hastings AS", gridNearest)
 
+plt.show()
 # Keep Image Open
 cv2.waitKey(0)
 
