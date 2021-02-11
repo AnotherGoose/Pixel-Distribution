@@ -1,17 +1,11 @@
-import cv2
 import numpy as np
 import math
 import random
 from scipy.interpolate import griddata
-import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
 def rmse(predictions, targets):
-    #return np.sqrt(((predictions - targets) **
-    #MSE = np.square(np.subtract(targets, predictions)).mean()
-    #RMSE = math.sqrt(MSE)
     RMSE = mean_squared_error(targets, predictions, squared=False)
-
     return RMSE
 
 def nInterp2D(pixels, array):
@@ -76,7 +70,7 @@ def MetHastings(img, ROI, pixels, bConst, roiConst):
     pCount += 1
 
     #Loop through other pixels
-    while pCount < pix:
+    while pCount < pixels:
         # Random x and y Values
         rX = random.randint(0, imW - 1)
         rY = random.randint(0, imH - 1)
@@ -93,63 +87,5 @@ def MetHastings(img, ROI, pixels, bConst, roiConst):
                 AS[rY][rX] = n
                 pCount += 1
 
-    nearestAS = nInterp2D(pix, AS)
-
+    nearestAS = nInterp2D(pixels, AS)
     return nearestAS
-
-depth = cv2.imread("Depth.png")
-depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
-
-ROI = np.array([[418, 67, 211, 310]])
-
-pix = 10000
-
-gridNearest = MetHastings(depth, ROI, pix, 1, 10)
-
-#RMSE of total image
-rmseN = rmse(depth, depth)
-rmseAS = rmse(gridNearest, depth)
-
-print("Normal RMSE: ", rmseN)
-print("AS RMSE: ", rmseAS)
-
-#=============RMSE of ROI=================
-print("RMSE of ROI")
-for i in ROI:
-    x,y,w,h = i
-
-    cropAS = gridNearest[y:y+h, x:x+w]
-    cropDepth = depth[y:y+h, x:x+w]
-
-    rmseAS = rmse(cropAS, cropDepth)
-
-    print("ROI AS RMSE: ", rmseAS)
-#=========================================
-
-plt.subplot(221)
-plt.imshow(gridNearest.T)
-plt.xticks([])
-plt.yticks([])
-plt.subplot(222)
-plt.imshow(depth.T)
-plt.xticks([])
-plt.yticks([])
-
-plt.subplot(223)
-plt.imshow(cropAS.T)
-plt.xticks([])
-plt.yticks([])
-plt.subplot(224)
-plt.imshow(cropDepth.T)
-plt.xticks([])
-plt.yticks([])
-
-cv2.imshow("Met Hastings AS", gridNearest)
-
-plt.show()
-# Keep Image Open
-cv2.waitKey(0)
-
-# Close Windows
-cv2.destroyAllWindows()
-

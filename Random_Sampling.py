@@ -1,9 +1,7 @@
-import cv2
 import numpy as np
 import math
 import random
 from scipy.interpolate import griddata
-import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
 def rmse(predictions, targets):
@@ -81,7 +79,6 @@ def randomAS(img, ROI, pixels, roiPort):
             pCount += 1
 
     nearestAS = nInterp2D(pixels, AS)
-    print("AS pixels used: ", pCount)
     return nearestAS
 
 def randomS(img, pixels):
@@ -104,98 +101,6 @@ def randomS(img, pixels):
             pCount += 1
 
     nearestRS = nInterp2D(pixels, RS)
-    print("RS pixels used: ", pCount)
     return nearestRS
-
-#Output from model
-#Frame 30
-#ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
-#Frame 05 cave_2
-ROI = np.array([[418, 67, 211, 310]])
-
-depth = cv2.imread("Depth.png")
-depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
-
-#Set Total Pixels
-pix = 10000
-
-ASNearest = randomAS(depth, ROI, pix, 40)
-RSNearest = randomS(depth, pix)
-
-#RMSE of total image
-rmseN = rmse(depth, depth)
-rmseAS = rmse(ASNearest, depth)
-rmseRS = rmse(RSNearest, depth)
-
-print("Normal RMSE: ", rmseN)
-print("Random RMSE: ", rmseRS)
-print("AS RMSE: ", rmseAS)
-
-#=============RMSE of ROI=================
-print("RMSE of ROI")
-for i in ROI:
-    x,y,w,h = i
-
-    cropAS = ASNearest[y:y+h, x:x+w]
-    cropRS = RSNearest[y:y+h, x:x+w]
-    cropDepth = depth[y:y+h, x:x+w]
-
-    rmseAS = rmse(cropAS, cropDepth)
-    rmseRS = rmse(cropRS, cropDepth)
-
-    print("ROI Random RMSE: ", rmseRS)
-    print("ROI AS RMSE: ", rmseAS)
-#=========================================
-
-'''
-plt.subplot(231)
-plt.imshow(ASNearest.T)
-plt.xticks([])
-plt.yticks([])
-plt.subplot(232)
-plt.imshow(RSNearest.T)
-plt.xticks([])
-plt.yticks([])
-plt.subplot(233)
-plt.imshow(depth.T)
-plt.xticks([])
-plt.yticks([])
-
-plt.subplot(234)
-plt.imshow(cropAS.T)
-plt.xticks([])
-plt.yticks([])
-plt.subplot(235)
-plt.imshow(cropRS.T)
-plt.xticks([])
-plt.yticks([])
-plt.subplot(236)
-plt.imshow(cropDepth.T)
-plt.xticks([])
-plt.yticks([])
-'''
-
-
-
-#Show the Image
-cv2.imshow("Adaptive Sampling", ASNearest)
-cv2.imshow("Random Sampling", RSNearest)
-
-#Show Cropped Image
-cv2.imshow("ROI AS", cropAS)
-cv2.imshow("ROI RS", cropRS)
-
-#plt.show()
-
-# Keep Image Open
-cv2.waitKey(0)
-
-# Close Windows
-cv2.destroyAllWindows()
-
-#Save Image
-cv2.imwrite('AS.png', ASNearest)
-cv2.imwrite("RS.png", RSNearest)
-
 
 
