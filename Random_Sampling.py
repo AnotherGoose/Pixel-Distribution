@@ -4,12 +4,10 @@ import math
 import random
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error
 
-#https://stackoverflow.com/questions/17197492/is-there-a-library-function-for-root-mean-square-error-rmse-in-python
 def rmse(predictions, targets):
-    #return np.sqrt(((predictions - targets) **
-    MSE = np.square(np.subtract(targets, predictions)).mean()
-    RMSE = math.sqrt(MSE)
+    RMSE = mean_squared_error(targets, predictions, squared=False)
     return RMSE
 
 
@@ -34,8 +32,80 @@ def nInterp2D(pixels, array):
                 points[c] = (i, j)
                 c += 1
     Nearest = griddata(points, values, (grid_y, grid_x), method='nearest')
+    Nearest = Nearest.astype(np.uint8)
     return Nearest
 
+def randomAS(img, ROI, pixels, roiPort):
+    imH, imW = img.shape
+
+    AS = np.empty((imH, imW))
+    AS[:] = np.nan
+
+    if pixels > imH * imW:
+        print("Error: Pixel allocation is too large")
+        pixels = imH * imW
+
+    # Round ROI pixels
+    newROIP = round(pixels * (roiPort / 100))
+
+    totROI = 0
+
+    #Total ROI pixels
+    for r in ROI:
+        x, y, w, h = r
+        totROI += w * h
+
+    if newROIP > totROI:
+        newROIP = totROI
+
+    pCount = 0
+    for r in ROI:
+        x, y, w, h = r
+        #Portion of total ROI
+        ROIPort = (w * h) / (totROI)
+        nPixels = newROIP * ROIPort
+        while pCount < nPixels:
+            rX = random.randint(x, x + w - 1)
+            rY = random.randint(y, y + h - 1)
+
+            if math.isnan(AS[rY][rX]):
+                AS[rY][rX] = img[rY][rX]
+                pCount += 1
+
+    while pCount < pixels:
+        rX = random.randint(0, imW - 1)
+        rY = random.randint(0, imH - 1)
+
+        if math.isnan(AS[rY][rX]):
+            AS[rY][rX] = img[rY][rX]
+            pCount += 1
+
+    nearestAS = nInterp2D(pixels, AS)
+    print("AS pixels used: ", pCount)
+    return nearestAS
+
+def randomS(img, pixels):
+    imH, imW = img.shape
+
+    RS = np.empty((imH, imW))
+    RS[:] = np.nan
+
+    if pixels > imH * imW:
+        print("Error: Pixel allocation is too large")
+        pixels = imH * imW
+
+    pCount = 0
+    while pCount < pixels:
+        rX = random.randint(0, imW - 1)
+        rY = random.randint(0, imH - 1)
+
+        if math.isnan(RS[rY][rX]):
+            RS[rY][rX] = img[rY][rX]
+            pCount += 1
+
+    nearestRS = nInterp2D(pixels, RS)
+    print("RS pixels used: ", pCount)
+    return nearestRS
 
 #Output from model
 #Frame 30
@@ -48,108 +118,9 @@ depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
 
 #Set Total Pixels
 pix = 10000
-roiPor = 80
-backPor = 100 - roiPor
 
-#RGB Width and Height
-imH, imW = depth.shape
-
-#blank_image = np.zeros((h,w), np.uint8)
-
-AS = np.empty((imH, imW))
-AS[:] = np.nan
-RS = np.empty((imH, imW))
-RS[:] = np.nan
-
-#========Linear Random Sample Background=========
-rows, cols = RS.shape
-
-if ((rows * cols) < pix):
-    pix = rows * cols
-    print("Error! allocated more pixels than are available")
-
-pCount = 0
-while pCount < pix:
-    rX = random.randint(0, cols - 1)
-    rY = random.randint(0, rows - 1)
-
-    if math.isnan(RS[rY][rX]):
-        RS[rY][rX] = depth[rY][rX]
-        pCount += 1
-        # RS[rY][rX] = 255
-
-print("Linear RS Pixels Used: ", pCount)
-
-#================================================
-
-
-#========Random Adaptive Sampling=========
-rows, cols  = AS.shape
-
-#Round up ROI pixels
-roiTotPix = math.ceil(pix * (roiPor / 100))
-
-#Round Down background pixels
-backPix = math.floor(pix * (backPor/100))
-
-#Calculate total number of original ROI pixels
-
-pixSumROI = 0
-for i in ROI:
-    x, y, w, h = i
-    pixSumROI += w * h
-
-
-#========ROI's Random Sampling=========
-pCount = 0
-for i in ROI:
-    x, y, w, h = i
-    ROIPort = (w * h)/(pixSumROI)
-    nPixels = round(roiTotPix * ROIPort)
-
-    #Check to make sure doesnt indefinatley loop
-    if((w * h) < nPixels):
-        backPix = backPix + (nPixels - (w * h))
-        nPixels = (w * h)
-
-    while(pCount < nPixels):
-        rX = random.randint(x, x + w - 1)
-        rY = random.randint(y, y + h - 1)
-
-        if math.isnan(AS[rY][rX]):
-            AS[rY][rX] = depth[rY][rX]
-            pCount += 1
-            # AS[rY][rX] = 255
-            #Can indefinetly loop if total number of pixels is surpassed
-        #img[rY][rX] = 255
-#=====================================================
-
-#==============Random Sample Background================
-
-if backPix > ((imW * imH) - pCount):
-    #Make sure not over allocating pixels
-    backPix = (imW * imH) - pCount
-
-bCount = 0
-while(bCount < backPix):
-    rX = random.randint(0, cols - 1)
-    rY = random.randint(0, rows - 1)
-
-    if math.isnan(AS[rY][rX]):
-        AS[rY][rX] = depth[rY][rX]
-        bCount += 1
-        #AS[rY][rX] = 255
-
-#=========PREFORM INTERPOLATION BEFORE RMSE==================
-
-ASNearest = nInterp2D(pix, AS)
-RSNearest = nInterp2D(pix, RS)
-
-#============================================================
-
-
-
-
+ASNearest = randomAS(depth, ROI, pix, 40)
+RSNearest = randomS(depth, pix)
 
 #RMSE of total image
 rmseN = rmse(depth, depth)
@@ -176,6 +147,7 @@ for i in ROI:
     print("ROI AS RMSE: ", rmseAS)
 #=========================================
 
+'''
 plt.subplot(231)
 plt.imshow(ASNearest.T)
 plt.xticks([])
@@ -201,20 +173,19 @@ plt.subplot(236)
 plt.imshow(cropDepth.T)
 plt.xticks([])
 plt.yticks([])
-plt.show()
-
-
 '''
+
+
+
 #Show the Image
-cv2.imshow("Adaptive Sampling", AS)
-cv2.imshow("Random Sampling", RS)
+cv2.imshow("Adaptive Sampling", ASNearest)
+cv2.imshow("Random Sampling", RSNearest)
 
 #Show Cropped Image
 cv2.imshow("ROI AS", cropAS)
 cv2.imshow("ROI RS", cropRS)
 
-
-#Save Image
+#plt.show()
 
 # Keep Image Open
 cv2.waitKey(0)
@@ -222,8 +193,9 @@ cv2.waitKey(0)
 # Close Windows
 cv2.destroyAllWindows()
 
-cv2.imwrite('AS.png', AS)
-cv2.imwrite("RS.png",RS)
-'''
+#Save Image
+cv2.imwrite('AS.png', ASNearest)
+cv2.imwrite("RS.png", RSNearest)
+
 
 
