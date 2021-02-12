@@ -53,8 +53,8 @@ def MetHastings(img, ROI, pixels, bConst, roiConst):
     #ROI
     for r in ROI:
         x, y, w, h = r
-        for i in range(y, y + h + 1):
-            for j in range(x, x + w + 1):
+        for i in range(y, y + h):
+            for j in range(x, x + w):
                 fMap[i][j] = (img[i][j]) * roiConst
 
     #Pixels sampled
