@@ -61,8 +61,8 @@ def MetHastings(img, ROI, pixels, bConst, roiConst):
     pCount = 0
 
     #Set initial Met Hastings position
-    rX = random.randint(0, imW)
-    rY = random.randint(0, imH)
+    rX = random.randint(0, imW - 1)
+    rY = random.randint(0, imH - 1)
     nX = rX
     nY = rY
     n = img[rY][rX]
