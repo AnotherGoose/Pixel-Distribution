@@ -4,11 +4,6 @@ import random
 from scipy.interpolate import griddata
 from sklearn.metrics import mean_squared_error
 
-def rmse(predictions, targets):
-    RMSE = mean_squared_error(targets, predictions, squared=False)
-    return RMSE
-
-
 def nInterp2D(pixels, array):
     # Given a specific number of non-NaN pixels
     # interpolate to the grid of the 2D array
