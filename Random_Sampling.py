@@ -2,7 +2,6 @@ import numpy as np
 import math
 import random
 from scipy.interpolate import griddata
-from sklearn.metrics import mean_squared_error
 
 def nInterp2D(pixels, array):
     # Given a specific number of non-NaN pixels
