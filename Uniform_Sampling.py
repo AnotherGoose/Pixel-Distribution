@@ -72,10 +72,4 @@ def uniformS(img, nPixels):
 
     uniformNearest = nInterp2D(nPixels, US)
 
-    print("Pixels used: ", counter)
-    print("US %:", (counter / nPixels) * 100, "%")
-
-    if (counter <= nPixels):
-        print("It Works")
-
     return uniformNearest
