@@ -32,7 +32,7 @@ def nInterp2D(pixels, array):
     Nearest = Nearest.astype(np.uint8)
     return Nearest
 
-def MetHastings(img, ROI, pixels, bConst, roiConst):
+def MetHastings(img, ROI, pixels, bConst, roiConst, Iterations):
     imH, imW = img.shape
 
     #Define AS value array and Feature Map
@@ -69,22 +69,34 @@ def MetHastings(img, ROI, pixels, bConst, roiConst):
     AS[rY][rX] = n
     pCount += 1
 
+    #Determine if the iteration succeeded in finding a good candidate
+    accept = False
+
     #Loop through other pixels
     while pCount < pixels:
-        # Random x and y Values
-        rX = random.randint(0, imW - 1)
-        rY = random.randint(0, imH - 1)
-        # Ratio of new point compared to previous on feature map
-        α = min((fMap[rY][rX]) / (fMap[nY][nX]), 1)
-        # Random int between 1 and 0
-        r = random.uniform(0, 1)
-        if r < α:
+        accept = False
+        for i in range(Iterations):
+            # Random x and y Values
+            rX = random.randint(0, imW - 1)
+            rY = random.randint(0, imH - 1)
+
+            # Ratio of new point compared to previous on feature map
+            α = min((fMap[rY][rX]) / (fMap[nY][nX]), 1)
+
+            # Random int between 1 and 0
+            r = random.uniform(0, 1)
+            if r < α:
+                # Check if pixel is used
+                if math.isnan(AS[rY][rX]):
+                    nX = rX
+                    nY = rY
+                    n = img[rY][rX]
+                    accept = True
+
+        if accept:
             # Check if pixel is used
             if math.isnan(AS[rY][rX]):
-                nX = rX
-                nY = rY
-                n = img[rY][rX]
-                AS[rY][rX] = n
+                AS[nY][nX] = n
                 pCount += 1
 
     nearestAS = nInterp2D(pixels, AS)
