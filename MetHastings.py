@@ -95,7 +95,7 @@ def MetHastings(img, ROI, pixels, bConst, roiConst, Iterations):
 
         if accept:
             # Check if pixel is used
-            if math.isnan(AS[rY][rX]):
+            if math.isnan(AS[nY][nY]):
                 AS[nY][nX] = n
                 pCount += 1
 

@@ -71,5 +71,4 @@ def uniformS(img, nPixels):
             counter += 1
 
     uniformNearest = nInterp2D(nPixels, US)
-
     return uniformNearest

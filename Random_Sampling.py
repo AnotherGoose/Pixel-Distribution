@@ -96,5 +96,3 @@ def randomS(img, pixels):
 
     nearestRS = nInterp2D(pixels, RS)
     return nearestRS
-
-
