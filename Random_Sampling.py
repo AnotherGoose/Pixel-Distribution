@@ -38,7 +38,7 @@ def randomAS(img, ROI, pixels, roiPort):
         pixels = imH * imW
 
     # Round ROI pixels
-    newROIP = round(pixels * (roiPort / 100))
+    newROIP = round(pixels * roiPort)
 
     totROI = 0
 
