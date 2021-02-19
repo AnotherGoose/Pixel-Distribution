@@ -122,6 +122,19 @@ def createFeatureMap(img, ROI, bConst, rConst):
                     fMap[i][j] = rConst
     return fMap
 
+def walkIndex(prevI, max, sigma):
+    a = -1
+    b = 1
+    if prevI - sigma < 0:
+        #Can exceed the minimum
+        a = -(prevI) / sigma
+    if prevI + sigma > max:
+        #Index can exceed maximum
+        b = (max-prevI)/sigma
+    propI = int(prevI + round(sigma * random.uniform(a, b)))
+    return propI
+
+
 def MetHastings(img, ROI, pixels, bConst, roiConst, N):
     imH, imW = img.shape
 
@@ -201,22 +214,8 @@ def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
         yPrev = y = int(y)
         xPrev = x = int(x)
         for j in range(N):
-            #Could go below 0 or above max value!
-            xProp = int(xPrev + round(sigma * random.uniform(-1, 1)))
-            yProp = int(yPrev + round(sigma * random.uniform(-1, 1)))
-
-            #DUMB FIX REMOVE
-            if xProp < 0:
-                xProp = 0
-            if xProp > imW-1:
-                xProp = imW - 1
-            if yProp < 0:
-                yProp = 0
-            if yProp > imH-1:
-                yProp = imH - 1
-            yProp = int(yProp)
-            xProp = int(xProp)
-            #===============
+            xProp = walkIndex(xPrev, imW-1, sigma)
+            yProp = walkIndex(yPrev, imH-1, sigma)
 
             # Ratio of new point compared to previous on feature map
             α = min((fMap[yProp][xProp]) / (fMap[yPrev][xPrev]), 1)
@@ -232,17 +231,17 @@ def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
         AS[y][x] = np.nan
         AS[yPrev][xPrev] = img[yPrev][xPrev]
     nearestAS = nInterp2D(pixels, AS)
-    #nearestAS = AS
+    nearestAS = AS
     return nearestAS
-'''
+
 #depth = cv2.imread("depth.png")
 depth = cv2.imread("Mannequin.png")
 depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
 ROI = np.array([[0, 0, 142, 142]])
 #ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
-#RWHH = RandomWalkMetHastings(depth, ROI, 10000, 1, 10, 50, 5)
-RWHH = MetHastings(depth, ROI, 10000, 1, 10, 5)
+RWHH = RandomWalkMetHastings(depth, ROI, 10000, 1, 10, 25, 5)
+#RWHH = MetHastings(depth, ROI, 10000, 1, 10, 5)
 cv2.imshow("MH", RWHH)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-'''
+
