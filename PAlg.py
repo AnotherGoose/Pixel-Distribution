@@ -76,7 +76,7 @@ def nearestInterpolation():
 ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
 
 #Set Total Pixels
-pix = 2000
+pix = 10000
 roiPor = 80
 backPor = 100 - roiPor
 
@@ -95,10 +95,10 @@ uAspRot = uWid/uHei
 nW, nH, uStepW, uStepH, remPix = getNewDimensions(pix, uWid, uHei)
 
 c = 0
-for i in range(0, uHei):
+for i in range(uHei):
     uY = (i * uStepH)
     if uY < imH:
-        for j in range(0, uWid):
+        for j in range(uWid):
             uX = (j * uStepW)
             if uX < imW:
                 #WHY IS THIS FAILING
