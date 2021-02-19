@@ -1,31 +1,7 @@
 import numpy as np
 import math
 import random
-from scipy.interpolate import griddata
-
-def nInterp2D(pixels, array):
-    # Given a specific number of non-NaN pixels
-    # interpolate to the grid of the 2D array
-    c = 0
-    h, w = array.shape
-
-    # Grid to interpolate over
-    grid_y, grid_x = np.mgrid[0:h, 0:w]
-
-    # Values for non NaN points in the array
-    values = np.empty(pixels)
-    # X and Y coordinates of values
-    points = np.empty((pixels, 2))
-
-    for i in range(h):
-        for j in range(w):
-            if not math.isnan(array[i][j]):
-                values[c] = array[i][j]
-                points[c] = (i, j)
-                c += 1
-    Nearest = griddata(points, values, (grid_y, grid_x), method='nearest')
-    Nearest = Nearest.astype(np.uint8)
-    return Nearest
+import utils
 
 def randomAS(img, ROI, pixels, roiPort):
     imH, imW = img.shape
@@ -72,7 +48,7 @@ def randomAS(img, ROI, pixels, roiPort):
             AS[rY][rX] = img[rY][rX]
             pCount += 1
 
-    nearestAS = nInterp2D(pixels, AS)
+    nearestAS = utils.nInterp2D(pixels, AS)
     return nearestAS
 
 def randomS(img, pixels):
@@ -94,5 +70,5 @@ def randomS(img, pixels):
             RS[rY][rX] = img[rY][rX]
             pCount += 1
 
-    nearestRS = nInterp2D(pixels, RS)
+    nearestRS = utils.nInterp2D(pixels, RS)
     return nearestRS
