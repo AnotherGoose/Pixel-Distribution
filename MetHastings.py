@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import random
+import cv2
 from scipy.interpolate import griddata
 from sklearn.metrics import mean_squared_error
 
@@ -82,23 +83,43 @@ def uniformSpread(oArray, nPoints, nArray):
             counter += 1
     return nArray
 
+def nonNan(array):
+    h, w = array.shape
+    counter = 0
+    for i in range(h):
+        for j in range(w):
+            if not math.isnan(array[i][j]):
+                counter += 1
+    return counter
+
+def invertGrayscale(img):
+    img = cv2.bitwise_not(img)
+    return img
+
 def createFeatureMap(img, ROI, bConst, rConst):
     H, W = img.shape
     fMap = np.zeros((H, W))
 
+    #invert so closest pixels have higher weightings
+    imgInvert = invertGrayscale(img)
+
     #Background
     for i in range(H):
         for j in range(W):
-            fMap[i][j] = bConst
-            #fMap[i][j] = img[i][j] * bConst
+            #fMap[i][j] = bConst
+            fMap[i][j] = imgInvert[i][j] * bConst
+            if fMap[i][j] <= 0:
+                fMap[i][j] = bConst
 
     #ROI
     for r in ROI:
         x, y, w, h = r
         for i in range(y, y + h):
             for j in range(x, x + w):
-                fMap[i][j] = rConst
-                #fMap[i][j] = img[i][j] * roiConst
+                #fMap[i][j] = rConst
+                fMap[i][j] = imgInvert[i][j] * rConst
+                if fMap[i][j] <= 0:
+                    fMap[i][j] = rConst
     return fMap
 
 def MetHastings(img, ROI, pixels, bConst, roiConst, N):
@@ -159,6 +180,7 @@ def MetHastings(img, ROI, pixels, bConst, roiConst, N):
                 pCount += 1
 
     nearestAS = nInterp2D(pixels, AS)
+    #nearestAS = AS
     return nearestAS
 
 def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
@@ -168,11 +190,12 @@ def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
     AS[:] = np.nan
 
     AS = uniformSpread(img, pixels, AS)
-
     fMap = createFeatureMap(img, ROI, bConst, roiConst)
 
     #Split array to quickly go through pixels
-    values, points = seperateArray(AS, pixels)
+    pUsed = nonNan(AS)
+    values, points = seperateArray(AS, pUsed)
+
     for i in range(values.size):
         y, x = points[i]
         yPrev = y = int(y)
@@ -191,6 +214,8 @@ def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
                 yProp = 0
             if yProp > imH-1:
                 yProp = imH - 1
+            yProp = int(yProp)
+            xProp = int(xProp)
             #===============
 
             # Ratio of new point compared to previous on feature map
@@ -207,14 +232,17 @@ def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
         AS[y][x] = np.nan
         AS[yPrev][xPrev] = img[yPrev][xPrev]
     nearestAS = nInterp2D(pixels, AS)
-    nearestAS = AS
+    #nearestAS = AS
     return nearestAS
-
-import cv2
+'''
+#depth = cv2.imread("depth.png")
 depth = cv2.imread("Mannequin.png")
 depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
 ROI = np.array([[0, 0, 142, 142]])
-RWHH = RandomWalkMetHastings(depth, ROI, 10000, 1, 10, 20, 10)
-cv2.imshow("RWHH", RWHH)
+#ROI = np.array([[0, 27, 576, 391], [587, 172, 270, 90]])
+#RWHH = RandomWalkMetHastings(depth, ROI, 10000, 1, 10, 50, 5)
+RWHH = MetHastings(depth, ROI, 10000, 1, 10, 5)
+cv2.imshow("MH", RWHH)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+'''
