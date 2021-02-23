@@ -25,9 +25,6 @@ def createFeatureMapBBox(img, ROI, bConst, rConst):
     for i in range(H):
         for j in range(W):
             fMap[i][j] = bConst
-            #fMap[i][j] = imgInvert[i][j] * bConst
-            if fMap[i][j] <= 0:
-                fMap[i][j] = bConst
 
     #ROI
     for r in ROI:
@@ -35,9 +32,6 @@ def createFeatureMapBBox(img, ROI, bConst, rConst):
         for i in range(y, y + h):
             for j in range(x, x + w):
                 fMap[i][j] = rConst
-                #fMap[i][j] = imgInvert[i][j] * rConst
-                if fMap[i][j] <= 0:
-                    fMap[i][j] = rConst
     return fMap
 
 def createFeatureMapInstance(mask, bConst, iConst):
