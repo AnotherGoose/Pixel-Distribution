@@ -104,4 +104,17 @@ def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
     #nearestAS = AS
     return nearestAS
 
+'''
+import cv2
+ROI = np.array([[0, 0, 142, 142]])
+x,y,w,h = ROI[0]
+depth = cv2.imread("Mannequin.png")
+depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
+AS = RandomWalkMetHastings(depth, ROI, 10000, 1, 10, 100, 25)
+print(utils.rmse(AS, depth))
+print(utils.rmse(AS[y:y + h, x:x + w], depth[y:y + h, x:x + w]))
+cv2.imshow("UAS", AS)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+'''
 

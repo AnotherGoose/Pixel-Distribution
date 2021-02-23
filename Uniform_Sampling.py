@@ -56,4 +56,16 @@ def uniformAS(img, ROI, nPixels, rPort):
     AS = utils.uniformSpread(img, bPixels, AS)
     pUsed = utils.nonNan(AS)
     uniformNearest = utils.nInterp2D(pUsed, AS)
+    #uniformNearest = AS
     return uniformNearest
+
+'''
+import cv2
+ROI = np.array([[0, 0, 142, 142]])
+depth = cv2.imread("Mannequin.png")
+depth = cv2.cvtColor(depth, cv2.COLOR_RGB2GRAY)
+AS = uniformAS(depth, ROI, 10000, 0.6)
+cv2.imshow("UAS", AS)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+'''

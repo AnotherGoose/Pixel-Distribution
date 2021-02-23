@@ -27,8 +27,8 @@ def createFeatureMap(img, ROI, bConst, rConst):
     #Background
     for i in range(H):
         for j in range(W):
-            #fMap[i][j] = bConst
-            fMap[i][j] = imgInvert[i][j] * bConst
+            fMap[i][j] = bConst
+            #fMap[i][j] = imgInvert[i][j] * bConst
             if fMap[i][j] <= 0:
                 fMap[i][j] = bConst
 
@@ -37,8 +37,8 @@ def createFeatureMap(img, ROI, bConst, rConst):
         x, y, w, h = r
         for i in range(y, y + h):
             for j in range(x, x + w):
-                #fMap[i][j] = rConst
-                fMap[i][j] = imgInvert[i][j] * rConst
+                fMap[i][j] = rConst
+                #fMap[i][j] = imgInvert[i][j] * rConst
                 if fMap[i][j] <= 0:
                     fMap[i][j] = rConst
     return fMap
