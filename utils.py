@@ -17,12 +17,9 @@ def walkIndex(prevI, max, sigma):
     propI = int(prevI + round(sigma * random.uniform(a, b)))
     return propI
 
-def createFeatureMap(img, ROI, bConst, rConst):
+def createFeatureMapBBox(img, ROI, bConst, rConst):
     H, W = img.shape
     fMap = np.zeros((H, W))
-
-    #invert so closest pixels have higher weightings
-    imgInvert = invertGrayscale(img)
 
     #Background
     for i in range(H):
@@ -41,6 +38,19 @@ def createFeatureMap(img, ROI, bConst, rConst):
                 #fMap[i][j] = imgInvert[i][j] * rConst
                 if fMap[i][j] <= 0:
                     fMap[i][j] = rConst
+    return fMap
+
+def createFeatureMapInstance(mask, bConst, iConst):
+    H, W = mask.shape
+    fMap = np.zeros((H, W))
+
+    for i in range(H):
+        for j in range(W):
+            if mask[i][j] == True:
+                fMap[i][j] = iConst
+            else:
+                fMap[i][j] = bConst
+
     return fMap
 
 def rmse(predictions, targets):

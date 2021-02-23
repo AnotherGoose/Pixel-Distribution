@@ -104,6 +104,50 @@ def RandomWalkMetHastings(img, ROI, pixels, bConst, roiConst, sigma, N):
     #nearestAS = AS
     return nearestAS
 
+def RandomWalkMetHastingsInstance(img, mask, pixels, bConst, iConst, sigma, N):
+    imH, imW = img.shape
+
+    AS = np.empty((imH, imW))
+    AS[:] = np.nan
+
+    AS = utils.uniformSpread(img, pixels, AS)
+    fMap = utils.createFeatureMapInstance(mask, bConst, iConst)
+
+    RWMH = RandomWalkMetHastingsGen(img, AS, fMap, sigma, N)
+    return RWMH
+
+def RandomWalkMetHastingsGen(img, AS, fMap, sigma, N):
+    imH, imW = img.shape
+
+    #Split array to quickly go through pixels
+    pUsed = utils.nonNan(AS)
+    values, points = utils.seperateArray(AS, pUsed)
+
+    for i in range(values.size):
+        y, x = points[i]
+        yPrev = y = int(y)
+        xPrev = x = int(x)
+        for j in range(N):
+            xProp = utils.walkIndex(xPrev, imW-1, sigma)
+            yProp = utils.walkIndex(yPrev, imH-1, sigma)
+
+            # Ratio of new point compared to previous on feature map
+            α = min((fMap[yProp][xProp]) / (fMap[yPrev][xPrev]), 1)
+
+            # Random int between 1 and 0
+            r = random.uniform(0, 1)
+            # Check proposal
+            if r < α:
+                # Check if point is used
+                if math.isnan(AS[yProp][xProp]):
+                    yPrev = yProp
+                    xPrev = xProp
+        AS[y][x] = np.nan
+        AS[yPrev][xPrev] = img[yPrev][xPrev]
+    nearestAS = utils.nInterp2D(pUsed, AS)
+    nearestAS = AS
+    return nearestAS
+
 '''
 import cv2
 ROI = np.array([[0, 0, 142, 142]])
