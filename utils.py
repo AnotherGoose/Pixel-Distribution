@@ -21,10 +21,11 @@ def createFeatureMapBBox(img, ROI, bConst, rConst):
     H, W = img.shape
     fMap = np.zeros((H, W))
 
+    fMap[:, :] = bConst
     #Background
-    for i in range(H):
-        for j in range(W):
-            fMap[i][j] = bConst
+    #for i in range(H):
+    #    for j in range(W):
+    #        fMap[i][j] = bConst
 
     #ROI
     for r in ROI:
@@ -35,15 +36,16 @@ def createFeatureMapBBox(img, ROI, bConst, rConst):
     return fMap
 
 def createFeatureMapInstance(mask, bConst, iConst):
-    H, W = mask.shape
-    fMap = np.zeros((H, W))
+    row, col, width = mask.shape
+    fMap = np.zeros((row, col))
 
-    for i in range(H):
-        for j in range(W):
-            if mask[i][j] == True:
-                fMap[i][j] = iConst
-            else:
-                fMap[i][j] = bConst
+    fMap[:, :] = bConst
+
+    for i in range(width):
+        for j in range(row):
+            for k in range(col):
+                if mask[j][k][i] == True:
+                    fMap[j][k] = iConst
 
     return fMap
 
