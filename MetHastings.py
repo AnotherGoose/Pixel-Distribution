@@ -64,8 +64,8 @@ def MetHastings(img, pixels, fMap, N):
                 AS[nY][nX] = n
                 pCount += 1
 
-    #nearestAS = utils.nInterp2D(pixels, AS)
-    nearestAS = AS
+    nearestAS = utils.nInterp2D(pixels, AS)
+    #nearestAS = AS
     return nearestAS
 
 def RandomWalkMetHastingsBBox(img, ROI, pixels, bConst, roiConst, sigma, N):
@@ -121,7 +121,7 @@ def RandomWalkMetHastings(img, AS, fMap, sigma, N):
         AS[y][x] = np.nan
         AS[yPrev][xPrev] = img[yPrev][xPrev]
     nearestAS = utils.nInterp2D(pUsed, AS)
-    nearestAS = AS
+    #nearestAS = AS
     return nearestAS
 
 '''
