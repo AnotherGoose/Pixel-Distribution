@@ -60,7 +60,7 @@ def MetHastings(img, pixels, fMap, N):
 
         if accept:
             # Check if pixel is used
-            if math.isnan(AS[nY][nY]):
+            if math.isnan(AS[nY][nX]):
                 AS[nY][nX] = n
                 pCount += 1
 
