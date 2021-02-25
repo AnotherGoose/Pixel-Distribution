@@ -21,11 +21,8 @@ def createFeatureMapBBox(img, ROI, bConst, rConst):
     H, W = img.shape
     fMap = np.zeros((H, W))
 
-    fMap[:, :] = bConst
     #Background
-    #for i in range(H):
-    #    for j in range(W):
-    #        fMap[i][j] = bConst
+    fMap[:, :] = bConst
 
     #ROI
     for r in ROI:
@@ -36,16 +33,15 @@ def createFeatureMapBBox(img, ROI, bConst, rConst):
     return fMap
 
 def createFeatureMapInstance(mask, bConst, iConst):
-    row, col, width = mask.shape
+    row, col = mask.shape
     fMap = np.zeros((row, col))
 
     fMap[:, :] = bConst
 
-    for i in range(width):
-        for j in range(row):
-            for k in range(col):
-                if mask[j][k][i] == True:
-                    fMap[j][k] = iConst
+    for j in range(row):
+        for k in range(col):
+            if mask[j][k] == True:
+                fMap[j][k] = iConst
 
     return fMap
 
@@ -139,3 +135,10 @@ def nonNan(array):
 def invertGrayscale(img):
     img = cv2.bitwise_not(img)
     return img
+
+def combineMasks(masks):
+    row, col, width = masks.shape
+    mask = np.zeros((row, col), dtype=bool)
+    for i in range(width):
+        mask = np.logical_or(mask, masks[:, :, i])
+    return mask
